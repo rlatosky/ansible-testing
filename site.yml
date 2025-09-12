@@ -1,0 +1,64 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (Debian)
+    tags: always
+    apt:
+      upgrade: dist
+      update_cache: true
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+
+  - name: install updates (RedHat/Fedora)
+    tags: always
+    dnf:
+      update_only: true
+      update_cache: true
+    when: ansible_distribution in ["Fedora", "Red Hat"]
+
+
+- hosts: web_servers
+  become: true
+  tasks:
+
+  - name: install incus (Debian)
+    tags: incus,debian
+    apt:
+      name: incus-base,incus-extra
+      state: latest
+      update_cache: true
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+
+  - name: install incus (RedHat/Fedora)
+    tags: incus,redhat
+    dnf:
+      name:
+        - incus
+      state: latest
+      update_cache: true
+    when: ansible_distribution in ['alma','redhat','fedora']
+
+
+- hosts: file_servers
+  become: true
+  tasks:
+
+  - name: install NFS (Debian)
+    tags: nfs,debian
+    apt:
+      name: nfs-kernel-server
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+
+  - name: install NFS (Red Hat)
+    tags: nfs,redhat
+    apt:
+      name: nfs-utils
+    when: ansible_distribution in ['alma','redhat','fedora']
+
+  - name: allow nfs through firewall (UFW)
+    tags: nfs,debian
+    command:
+      cmd: ufw allow nfs
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
