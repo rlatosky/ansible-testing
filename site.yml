@@ -18,6 +18,30 @@
       update_cache: true
     when: ansible_distribution in ["Fedora", "Red Hat"]
 
+  - name: force use of pubkey authentication in SSH
+    tags: always,ssh
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#PubkeyAuthentication'
+      line: PubkeyAuthentication yes
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+    register: ssh
+
+  - name: disable password authentication in SSH
+    tags: always,ssh
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#PasswordAuthentication'
+      line: PasswordAuthentication no
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+    register: ssh
+
+  - name: restart sshd
+    tags: ssh
+    service:
+      name: sshd
+      state: restarted
+    when: ssh.changed
 
 - hosts: web_servers
   become: true
