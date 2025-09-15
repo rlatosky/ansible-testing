@@ -1,0 +1,12 @@
+#  - name: add ssh key for taskmgr
+#    tags: always
+#    authorized_key:
+#      user: taskmgr
+#      key: "[Place output of cat ~/.ssh/keys/ansible.pub here]"
+
+- name: remove extrepo
+  tags: debian
+  file:
+    path: /etc/apt/sources.list.d/extrepo_debian_backports.sources
+    state: absent
+  when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]

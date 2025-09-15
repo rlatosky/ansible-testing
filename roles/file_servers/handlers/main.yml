@@ -1,0 +1,4 @@
+- name: restart_ufw
+  service:
+    name: "{{ ufw_service }}"
+    state: restarted

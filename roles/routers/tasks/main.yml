@@ -1,0 +1,24 @@
+- name: install podman (Debian)
+  tags: podman,debian
+  apt:
+    name: podman, podman-compose, podman-docker
+    state: latest
+    update_cache: true
+  when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+
+- name: remove incus (Debian)
+  tags: incus,debian
+  apt:
+    name: incus-base,incus-extra,incus-client
+    state: absent
+    update_cache: true
+  when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+
+- name: remove incus (RedHat/Fedora)
+  tags: incus,redhat
+  dnf:
+    name:
+      - incus
+    state: absent
+    update_cache: true
+  when: ansible_distribution in ['alma','redhat','fedora']

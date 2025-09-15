@@ -1,0 +1,69 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates (Debian)
+    tags: always
+    apt:
+      upgrade: dist
+      update_cache: true
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+
+  - name: install updates (RedHat/Fedora)
+    tags: always
+    dnf:
+      update_only: true
+      update_cache: true
+    when: ansible_distribution in ["Fedora", "Red Hat"]
+
+  - name: force use of pubkey authentication in SSH
+    tags: always,ssh
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#PubkeyAuthentication'
+      line: PubkeyAuthentication yes
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+    register: ssh
+
+  - name: disable password authentication in SSH
+    tags: always,ssh
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^#PasswordAuthentication'
+      line: PasswordAuthentication no
+    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+    register: ssh
+
+  - name: restart sshd
+    tags: ssh
+    service:
+      name: sshd
+      state: restarted
+    when: ssh.changed
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: create taskmgr user
+    tags: always
+    user:
+      name: taskmgr
+      groups: root
+
+#  - name: add ssh key for taskmgr
+#    tags: always
+#    authorized_key:
+#      user: taskmgr
+#      key: "[Place output of cat ~/.ssh/keys/ansible.pub here]"
+
+  - name: add sudoers file for taskmgr
+    tags: always
+    copy:
+      src: taskmgr
+      dest: /etc/sudoers.d/taskmgr
+      owner: root
+      group: root
+      mode: 0440

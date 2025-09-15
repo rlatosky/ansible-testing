@@ -4,85 +4,36 @@
   become: true
   pre_tasks:
 
-  - name: install updates (Debian)
+  - name: update repos (Debian)
     tags: always
     apt:
-      upgrade: dist
       update_cache: true
+    changed_when: false
     when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
 
-  - name: install updates (RedHat/Fedora)
+  - name: update repos (RedHat/Fedora)
     tags: always
     dnf:
-      update_only: true
       update_cache: true
+    changed_when: false # force to show not as changed
     when: ansible_distribution in ["Fedora", "Red Hat"]
 
-  - name: force use of pubkey authentication in SSH
-    tags: always,ssh
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      regexp: '^#PubkeyAuthentication'
-      line: PubkeyAuthentication yes
-    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
-    register: ssh
-
-  - name: disable password authentication in SSH
-    tags: always,ssh
-    lineinfile:
-      path: /etc/ssh/sshd_config
-      regexp: '^#PasswordAuthentication'
-      line: PasswordAuthentication no
-    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
-    register: ssh
-
-  - name: restart sshd
-    tags: ssh
-    service:
-      name: sshd
-      state: restarted
-    when: ssh.changed
-
-- hosts: web_servers
+- hosts: all
   become: true
-  tasks:
-
-  - name: install incus (Debian)
-    tags: incus,debian
-    apt:
-      name: incus-base,incus-extra
-      state: latest
-      update_cache: true
-    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
-
-  - name: install incus (RedHat/Fedora)
-    tags: incus,redhat
-    dnf:
-      name:
-        - incus
-      state: latest
-      update_cache: true
-    when: ansible_distribution in ['alma','redhat','fedora']
-
+  roles:
+    - base
 
 - hosts: file_servers
   become: true
-  tasks:
+  roles:
+    - file_servers
 
-  - name: install NFS (Debian)
-    tags: nfs,debian
-    apt:
-      name: nfs-kernel-server
-    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+- hosts: web_servers
+  become: true
+  roles:
+    - web_servers
 
-  - name: install NFS (Red Hat)
-    tags: nfs,redhat
-    apt:
-      name: nfs-utils
-    when: ansible_distribution in ['alma','redhat','fedora']
-
-  - name: allow nfs through firewall (UFW)
-    tags: nfs,debian
-    command:
-      cmd: ufw allow nfs
-    when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+- hosts: routers
+  become: true
+  roles:
+    - routers

@@ -1,0 +1,30 @@
+- name: Add bookworm_backports
+  apt_repository:
+    repo: deb https://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
+    state: present
+  when: ansible_distribution == 'Debian' and ansible_distribution_version == '12'
+
+- name: install incus (Debian)
+  tags: incus,debian
+  apt:
+    name: "{{ incus_package_name }}"
+    state: latest
+    update_cache: true
+  when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+
+- name: install incus (RedHat/Fedora)
+  tags: incus,redhat
+  dnf:
+    name:
+      - incus
+    state: latest
+    update_cache: true
+  when: ansible_distribution in ['alma','redhat','fedora']
+
+- name: start and enable incus service (Debian)
+  tags: incus,debian
+  service:
+    name: "{{ incus_service }}"
+    state: started
+    enabled: yes
+

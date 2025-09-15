@@ -1,0 +1,25 @@
+- name: install NFS (Debian)
+  tags: nfs,debian
+  apt:
+    name: nfs-kernel-server
+  when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
+
+- name: install NFS (Red Hat)
+  tags: nfs,redhat
+  apt:
+    name: nfs-utils
+  when: ansible_distribution in ['alma','redhat','fedora']
+
+- name: start and enable NFS service (Debian)
+  tags: nfs,debian
+  service:
+    name: "{{ nfs_service }}"
+    state: started
+    enabled: yes
+
+- name: allow NFS through firewall (UFW)
+  tags: nfs,debian
+  command:
+    cmd: ufw allow nfs
+  notify: restart_ufw
+  when: ansible_distribution in ["Ubuntu", "Debian", "LMDE"]
